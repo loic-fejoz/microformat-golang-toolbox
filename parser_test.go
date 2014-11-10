@@ -1,9 +1,9 @@
 package microformat2
 
 import (
-	"testing"
 	"golang.org/x/net/html"
 	"strings"
+	"testing"
 )
 
 func TestEmptyParagraph(t *testing.T) {

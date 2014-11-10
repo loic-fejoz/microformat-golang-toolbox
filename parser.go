@@ -1,8 +1,8 @@
 package microformat2
 
 import (
-	"golang.org/x/net/html"
 	"bytes"
+	"golang.org/x/net/html"
 	"strings"
 )
 
@@ -25,12 +25,12 @@ func getText(a_node *html.Node) string {
 type Element struct {
 	Types      []string
 	Properties map[string][]interface{}
-	isHCard bool
+	isHCard    bool
 }
 
 func NewElement(types []string) *Element {
 	result := &Element{Types: types, Properties: make(map[string][]interface{})}
-	for _, a_type := range(types) {
+	for _, a_type := range types {
 		if a_type == "h-card" {
 			result.isHCard = true
 		}
@@ -110,7 +110,7 @@ func AccParse(a_node *html.Node, result *Result, root *Element) {
 			}
 
 			// <a class="h-card..." href="...">...</a>
-			if ((root == current_root || root == nil) && a_node.Data == "a" && current_root.isHCard) {
+			if (root == current_root || root == nil) && a_node.Data == "a" && current_root.isHCard {
 				for _, a := range a_node.Attr {
 					if a.Key == "href" {
 						AppendProperty(current_root, "url", a.Val)
