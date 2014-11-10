@@ -22,44 +22,6 @@ func getText(a_node *html.Node) string {
 	return b.String()
 }
 
-type Element struct {
-	Types      []string
-	Properties map[string][]interface{}
-	isHCard    bool
-}
-
-func NewElement(types []string) *Element {
-	result := &Element{Types: types, Properties: make(map[string][]interface{})}
-	for _, a_type := range types {
-		if a_type == "h-card" {
-			result.isHCard = true
-		}
-	}
-	return result
-}
-
-func AppendProperty(elt *Element, propName string, propVal interface{}) {
-	props := elt.Properties[propName]
-	if props == nil {
-		props = make([]interface{}, 0, 3)
-	}
-	elt.Properties[propName] = append(props, propVal)
-}
-
-type Result struct {
-	Items      []*Element
-	Rels       map[string]string
-	Alternates []interface{}
-}
-
-func New() (res *Result) {
-	res = &Result{}
-	res.Items = make([]*Element, 0, 5)
-	res.Rels = map[string]string{}
-	res.Alternates = make([]interface{}, 0, 5)
-	return
-}
-
 func getClasses(a_node *html.Node) []string {
 	for _, a := range a_node.Attr {
 		if a.Key == "class" {
@@ -98,6 +60,11 @@ func isRoot(classes []string) bool {
 	return false
 }
 
+func mapProp2Name(prop string) string {
+	i := strings.Index(prop, "-") + 1
+	return prop[i:len(prop)]
+}
+
 func AccParse(a_node *html.Node, result *Result, root *Element) {
 	current_root := root
 	if a_node.Type == html.ElementNode {
@@ -119,6 +86,19 @@ func AccParse(a_node *html.Node, result *Result, root *Element) {
 				AppendProperty(current_root, "name", getText(a_node))
 			}
 		}
+		for _, prop := range filterPropertyClass(all_classes) {
+			if strings.HasPrefix(prop, "p-") || strings.HasPrefix(prop, "dt-") {
+				AppendProperty(current_root, mapProp2Name(prop), getText(a_node))
+			} else if strings.HasPrefix(prop, "u-") {
+				for _, a := range a_node.Attr {
+					if a.Key == "href" {
+						AppendProperty(current_root, mapProp2Name(prop), a.Val)
+					}
+				}
+			} else if strings.HasPrefix(prop, "e-") {
+				//	AppendProperty(current_root, prop, getHtml(a_node))
+			}
+		}
 	}
 	// Visit children
 	for c := a_node.FirstChild; c != nil; c = c.NextSibling {
@@ -127,7 +107,7 @@ func AccParse(a_node *html.Node, result *Result, root *Element) {
 }
 
 func Parse(doc *html.Node) (result *Result, err error) {
-	result = New()
+	result = NewResult()
 	err = nil
 	AccParse(doc, result, nil)
 	return
