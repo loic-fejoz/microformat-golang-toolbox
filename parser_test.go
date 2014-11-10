@@ -193,7 +193,7 @@ func TestDivAHCardWithAnchorOrg(t *testing.T) {
 		t.Fatal("org must be unique: ", orgs)
 	}
 	theOrg := orgs[0].(*Element)
-	urls =  theOrg.Properties["url"]
+	urls = theOrg.Properties["url"]
 	if len(urls) != 1 {
 		t.Fatal("Expected one url, Actual %s\n", len(urls))
 	}
@@ -201,7 +201,7 @@ func TestDivAHCardWithAnchorOrg(t *testing.T) {
 	if url != "http://www.example.com/MyAcme" {
 		t.Fatal("Expected http://www.example.com/MyAcme, Actual %s\n", url)
 	}
-	names =  theOrg.Properties["name"]
+	names = theOrg.Properties["name"]
 	if len(names) != 1 {
 		t.Fatal("Expected one name, Actual %s\n", len(names))
 	}
