@@ -6,24 +6,24 @@ import (
 	"strings"
 )
 
-func accText(a_node *html.Node, buff *bytes.Buffer) {
-	if a_node.Type == html.TextNode {
-		buff.Write([]byte(a_node.Data))
+func accText(aNode *html.Node, buff *bytes.Buffer) {
+	if aNode.Type == html.TextNode {
+		buff.Write([]byte(aNode.Data))
 	}
 	// Visit children
-	for c := a_node.FirstChild; c != nil; c = c.NextSibling {
+	for c := aNode.FirstChild; c != nil; c = c.NextSibling {
 		accText(c, buff)
 	}
 }
 
-func getText(a_node *html.Node) string {
+func getText(aNode *html.Node) string {
 	var b bytes.Buffer
-	accText(a_node, &b)
+	accText(aNode, &b)
 	return b.String()
 }
 
-func getClasses(a_node *html.Node) []string {
-	for _, a := range a_node.Attr {
+func getClasses(aNode *html.Node) []string {
+	for _, a := range aNode.Attr {
 		if a.Key == "class" {
 			return strings.Split(a.Val, " ")
 		}
@@ -51,9 +51,12 @@ func filterPropertyClass(classes []string) []string {
 	return out
 }
 
-func isRoot(classes []string) bool {
+func isRoot(aNode *html.Node, classes []string) bool {
 	for _, a_class := range classes {
 		if strings.HasPrefix(a_class, "h-") {
+			return true
+		}
+		if (a_class == "p-org") && (aNode.Type == html.ElementNode) && (aNode.Data == "a") {
 			return true
 		}
 	}
@@ -65,44 +68,49 @@ func mapProp2Name(prop string) string {
 	return prop[i:len(prop)]
 }
 
-func AccParse(a_node *html.Node, result *Result, root *Element) {
-	current_root := root
-	if a_node.Type == html.ElementNode {
-		all_classes := getClasses(a_node)
-		if isRoot(all_classes) {
-			types := filterRootClass(all_classes)
-			current_root = NewElement(types)
+func AccParse(aNode *html.Node, result *Result, root *Element) {
+	currentRoot := root
+	if aNode.Type == html.ElementNode {
+		allClasses := getClasses(aNode)
+		if isRoot(aNode, allClasses) {
+			types := filterRootClass(allClasses)
+			currentRoot = NewElement(types)
 			if root == nil {
-				result.Items = append(result.Items, current_root)
+				result.Items = append(result.Items, currentRoot)
 			}
 
 			// <a class="h-card..." href="...">...</a>
-			if (root == current_root || root == nil) && a_node.Data == "a" && current_root.isHCard {
-				for _, a := range a_node.Attr {
+			if aNode.Data == "a" && currentRoot.isHCard {
+				for _, a := range aNode.Attr {
 					if a.Key == "href" {
-						AppendProperty(current_root, "url", a.Val)
+						AppendProperty(currentRoot, "url", a.Val)
 					}
 				}
-				AppendProperty(current_root, "name", getText(a_node))
+				AppendProperty(currentRoot, "name", getText(aNode))
 			}
 		}
-		for _, prop := range filterPropertyClass(all_classes) {
+		for _, prop := range filterPropertyClass(allClasses) {
 			if strings.HasPrefix(prop, "p-") || strings.HasPrefix(prop, "dt-") {
-				AppendProperty(current_root, mapProp2Name(prop), getText(a_node))
+				if prop == "p-org" && currentRoot != root {
+					AppendProperty(root, mapProp2Name(prop), currentRoot)
+					AppendProperty(currentRoot, "name", getText(aNode))
+				} else {
+					AppendProperty(currentRoot, mapProp2Name(prop), getText(aNode))
+				}
 			} else if strings.HasPrefix(prop, "u-") {
-				for _, a := range a_node.Attr {
+				for _, a := range aNode.Attr {
 					if a.Key == "href" {
-						AppendProperty(current_root, mapProp2Name(prop), a.Val)
+						AppendProperty(currentRoot, mapProp2Name(prop), a.Val)
 					}
 				}
 			} else if strings.HasPrefix(prop, "e-") {
-				//	AppendProperty(current_root, prop, getHtml(a_node))
+				//	AppendProperty(currentRoot, prop, getHtml(aNode))
 			}
 		}
 	}
 	// Visit children
-	for c := a_node.FirstChild; c != nil; c = c.NextSibling {
-		AccParse(c, result, current_root)
+	for c := aNode.FirstChild; c != nil; c = c.NextSibling {
+		AccParse(c, result, currentRoot)
 	}
 }
 

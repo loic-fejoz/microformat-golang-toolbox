@@ -56,30 +56,30 @@ func TestSimpleHCard(t *testing.T) {
 	if len(r.Items) != 1 {
 		t.Error("Expected 1 items, Actual ", len(r.Items))
 	}
-	h_card := r.Items[0]
-	if h_card.Types == nil {
+	hCard := r.Items[0]
+	if hCard.Types == nil {
 		t.Fatal("types property must not be null.")
 	}
-	if len(h_card.Types) != 1 {
-		t.Fatal("Expected one type h-card, Actual ", len(h_card.Types), ": ", h_card.Types)
+	if len(hCard.Types) != 1 {
+		t.Fatal("Expected one type h-card, Actual ", len(hCard.Types), ": ", hCard.Types)
 	}
-	if h_card.Types[0] != "h-card" {
-		t.Fatal("Expected type 'h-card', Actual '", h_card.Types[0], "'")
+	if hCard.Types[0] != "h-card" {
+		t.Fatal("Expected type 'h-card', Actual '", hCard.Types[0], "'")
 	}
-	if h_card.Properties == nil {
+	if hCard.Properties == nil {
 		t.Fatal("properties property must not be null.")
 	}
-	if len(h_card.Properties) != 2 {
-		t.Fatal("Expected two properties, Actual ", len(h_card.Properties), ": ", h_card.Properties)
+	if len(hCard.Properties) != 2 {
+		t.Fatal("Expected two properties, Actual ", len(hCard.Properties), ": ", hCard.Properties)
 	}
-	urls := h_card.Properties["url"]
+	urls := hCard.Properties["url"]
 	if urls == nil {
 		t.Fatal("url must not be null")
 	}
 	if urls[0] != "http://www.example.com/Someone" {
 		t.Fatal("url must be 'http://www.example.com/Someone'")
 	}
-	names := h_card.Properties["name"]
+	names := hCard.Properties["name"]
 	if names == nil {
 		t.Fatal("name must not be null")
 	}
@@ -104,34 +104,171 @@ func TestDivAHCard(t *testing.T) {
 	if len(r.Items) != 1 {
 		t.Error("Expected 1 items, Actual ", len(r.Items))
 	}
-	h_card := r.Items[0]
-	if h_card.Types == nil {
+	hCard := r.Items[0]
+	if hCard.Types == nil {
 		t.Fatal("types property must not be null.")
 	}
-	if len(h_card.Types) != 1 {
-		t.Fatal("Expected one type h-card, Actual ", len(h_card.Types), ": ", h_card.Types)
+	if len(hCard.Types) != 1 {
+		t.Fatal("Expected one type h-card, Actual ", len(hCard.Types), ": ", hCard.Types)
 	}
-	if h_card.Types[0] != "h-card" {
-		t.Fatal("Expected type 'h-card', Actual '", h_card.Types[0], "'")
+	if hCard.Types[0] != "h-card" {
+		t.Fatal("Expected type 'h-card', Actual '", hCard.Types[0], "'")
 	}
-	if h_card.Properties == nil {
+	if hCard.Properties == nil {
 		t.Fatal("properties property must not be null.")
 	}
-	if len(h_card.Properties) != 2 {
-		t.Fatal("Expected two properties, Actual ", len(h_card.Properties), ": ", h_card.Properties)
+	if len(hCard.Properties) != 2 {
+		t.Fatal("Expected two properties, Actual ", len(hCard.Properties), ": ", hCard.Properties)
 	}
-	urls := h_card.Properties["url"]
+	urls := hCard.Properties["url"]
 	if urls == nil {
-		t.Fatal("url must not be null: ", h_card.Properties)
+		t.Fatal("url must not be null: ", hCard.Properties)
 	}
 	if urls[0] != "http://www.example.com/Someone" {
-		t.Fatal("url must be 'http://www.example.com/Someone'", h_card.Properties)
+		t.Fatal("url must be 'http://www.example.com/Someone'", hCard.Properties)
 	}
-	names := h_card.Properties["name"]
+	names := hCard.Properties["name"]
 	if names == nil {
 		t.Fatal("name must not be null")
 	}
 	if names[0] != "Someone" {
 		t.Fatal("Expected name 'Someone', Actual '", names[0], "'")
+	}
+}
+
+func TestDivAHCardWithAnchorOrg(t *testing.T) {
+	s := `<div class='h-card'><a class='u-url p-name' href='http://www.example.com/Someone'>Someone</a><a class='p-org u-url' href="http://www.example.com/MyAcme">MyAcme</a></div>`
+	doc, err := html.Parse(strings.NewReader(s))
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err := Parse(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r == nil {
+		t.Fatal("No data returned.")
+	}
+	if len(r.Items) != 1 {
+		t.Error("Expected 1 items, Actual ", len(r.Items))
+	}
+	hCard := r.Items[0]
+	if hCard.Types == nil {
+		t.Fatal("types property must not be null.")
+	}
+	if len(hCard.Types) != 1 {
+		t.Fatal("Expected one type h-card, Actual ", len(hCard.Types), ": ", hCard.Types)
+	}
+	if hCard.Types[0] != "h-card" {
+		t.Fatal("Expected type 'h-card', Actual '", hCard.Types[0], "'")
+	}
+	if hCard.Properties == nil {
+		t.Fatal("properties property must not be null.")
+	}
+	if len(hCard.Properties) != 3 {
+		t.Fatal("Expected three properties, Actual ", len(hCard.Properties), ": ", hCard.Properties)
+	}
+	urls := hCard.Properties["url"]
+	if urls == nil {
+		t.Fatal("url must not be null: ", hCard.Properties)
+	}
+	if len(urls) != 1 {
+		t.Fatal("url must be unique: ", urls)
+	}
+	if urls[0] != "http://www.example.com/Someone" {
+		t.Fatal("url must be 'http://www.example.com/Someone'", hCard.Properties)
+	}
+	names := hCard.Properties["name"]
+	if names == nil {
+		t.Fatal("name must not be null")
+	}
+	if names[0] != "Someone" {
+		t.Fatal("Expected name 'Someone', Actual '", names[0], "'")
+	}
+	orgs := hCard.Properties["org"]
+	if orgs == nil {
+		t.Fatal("org must not be null: ", orgs)
+	}
+	if len(orgs) != 1 {
+		t.Fatal("org must be unique: ", orgs)
+	}
+	theOrg := orgs[0].(*Element)
+	urls =  theOrg.Properties["url"]
+	if len(urls) != 1 {
+		t.Fatal("Expected one url, Actual %s\n", len(urls))
+	}
+	url := urls[0]
+	if url != "http://www.example.com/MyAcme" {
+		t.Fatal("Expected http://www.example.com/MyAcme, Actual %s\n", url)
+	}
+	names =  theOrg.Properties["name"]
+	if len(names) != 1 {
+		t.Fatal("Expected one name, Actual %s\n", len(names))
+	}
+	name := names[0]
+	if name != "MyAcme" {
+		t.Fatal("Expected MyAcme, Actual %s\n", name)
+	}
+}
+
+func TestDivAHCardWithOrg(t *testing.T) {
+	s := `<div class='h-card'><a class='u-url p-name' href='http://www.example.com/Someone'>Someone</a><span class='p-org'>MyAcme</span></div>`
+	doc, err := html.Parse(strings.NewReader(s))
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err := Parse(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r == nil {
+		t.Fatal("No data returned.")
+	}
+	if len(r.Items) != 1 {
+		t.Error("Expected 1 items, Actual ", len(r.Items))
+	}
+	hCard := r.Items[0]
+	if hCard.Types == nil {
+		t.Fatal("types property must not be null.")
+	}
+	if len(hCard.Types) != 1 {
+		t.Fatal("Expected one type h-card, Actual ", len(hCard.Types), ": ", hCard.Types)
+	}
+	if hCard.Types[0] != "h-card" {
+		t.Fatal("Expected type 'h-card', Actual '", hCard.Types[0], "'")
+	}
+	if hCard.Properties == nil {
+		t.Fatal("properties property must not be null.")
+	}
+	if len(hCard.Properties) != 3 {
+		t.Fatal("Expected three properties, Actual ", len(hCard.Properties), ": ", hCard.Properties)
+	}
+	urls := hCard.Properties["url"]
+	if urls == nil {
+		t.Fatal("url must not be null: ", hCard.Properties)
+	}
+	if len(urls) != 1 {
+		t.Fatal("url must be unique: ", urls)
+	}
+	if urls[0] != "http://www.example.com/Someone" {
+		t.Fatal("url must be 'http://www.example.com/Someone'", hCard.Properties)
+	}
+	names := hCard.Properties["name"]
+	if names == nil {
+		t.Fatal("name must not be null")
+	}
+	if names[0] != "Someone" {
+		t.Fatal("Expected name 'Someone', Actual '", names[0], "'")
+	}
+	orgs := hCard.Properties["org"]
+	if orgs == nil {
+		t.Fatal("org must not be null: ", orgs)
+	}
+	if len(orgs) != 1 {
+		t.Fatal("org must be unique: ", orgs)
+	}
+	theOrgName := orgs[0]
+	if theOrgName != "MyAcme" {
+		t.Fatal("Expected MyAcme, Actual %s\n", theOrgName)
 	}
 }
