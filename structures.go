@@ -1,7 +1,7 @@
 package microformat2
 
 import (
-	"fmt"
+//	"fmt"
 )
 
 type Element struct {
@@ -31,7 +31,12 @@ func AppendProperty(elt *Element, propName string, propVal interface{}) {
 func Append(elt1 *Element, elt2 *Element) *Element {
 	elt1.Types = append(elt1.Types, elt2.Types...)
 	elt1.isHCard = elt1.isHCard || elt2.isHCard
-	fmt.Printf("shall merge ", elt1, " and ", elt2)
+	for key, vals := range elt2.Properties {
+		for _, v := range vals {
+			AppendProperty(elt1, key, v)
+		}
+	}
+//	fmt.Printf("shall merge ", elt1, " and ", elt2)
 	return elt1
 }
 
