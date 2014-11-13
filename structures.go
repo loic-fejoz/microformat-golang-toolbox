@@ -36,8 +36,24 @@ func Append(elt1 *Element, elt2 *Element) *Element {
 			AppendProperty(elt1, key, v)
 		}
 	}
-//	fmt.Printf("shall merge ", elt1, " and ", elt2)
+	//	fmt.Printf("shall merge ", elt1, " and ", elt2)
 	return elt1
+}
+
+func GetUID(elt *Element) (string, error) {
+	uids := elt.Properties["uid"]
+	if uids != nil {
+		if len(uids) > 0 {
+			return uids[0].(string), nil
+		}
+	}
+	urls := elt.Properties["url"]
+	if urls != nil {
+		if len(urls) > 0 {
+			return urls[0].(string), nil
+		}
+	}
+	return "", nil
 }
 
 type Result struct {

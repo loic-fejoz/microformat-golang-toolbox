@@ -1,10 +1,10 @@
 package microformat2
 
 import (
+	"fmt"
 	"golang.org/x/net/html"
 	"strings"
 	"testing"
-	"fmt"
 )
 
 func TestEmptyParagraph(t *testing.T) {
@@ -212,6 +212,81 @@ func TestDivAHCardWithAnchorOrg(t *testing.T) {
 	}
 }
 
+func TestDivAHCardWithAnchorOrgWithUID(t *testing.T) {
+	s := `<div class='h-card'><a class='u-url p-name' href='http://www.example.com/Someone'>Someone</a><a class='p-org u-uid' href="http://www.example.com/MyAcme">MyAcme</a></div>`
+	doc, err := html.Parse(strings.NewReader(s))
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err := Parse(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r == nil {
+		t.Fatal("No data returned.")
+	}
+	if len(r.Items) != 1 {
+		t.Error("Expected 1 items, Actual ", len(r.Items))
+	}
+	hCard := r.Items[0]
+	if hCard.Types == nil {
+		t.Fatal("types property must not be null.")
+	}
+	if len(hCard.Types) != 1 {
+		t.Fatal("Expected one type h-card, Actual ", len(hCard.Types), ": ", hCard.Types)
+	}
+	if hCard.Types[0] != "h-card" {
+		t.Fatal("Expected type 'h-card', Actual '", hCard.Types[0], "'")
+	}
+	if hCard.Properties == nil {
+		t.Fatal("properties property must not be null.")
+	}
+	if len(hCard.Properties) != 3 {
+		t.Fatal("Expected three properties, Actual ", len(hCard.Properties), ": ", hCard.Properties)
+	}
+	urls := hCard.Properties["url"]
+	if urls == nil {
+		t.Fatal("url must not be null: ", hCard.Properties)
+	}
+	if len(urls) != 1 {
+		t.Fatal("url must be unique: ", urls)
+	}
+	if urls[0] != "http://www.example.com/Someone" {
+		t.Fatal("url must be 'http://www.example.com/Someone'", hCard.Properties)
+	}
+	names := hCard.Properties["name"]
+	if names == nil {
+		t.Fatal("name must not be null")
+	}
+	if names[0] != "Someone" {
+		t.Fatal("Expected name 'Someone', Actual '", names[0], "'")
+	}
+	orgs := hCard.Properties["org"]
+	if orgs == nil {
+		t.Fatal("org must not be null: ", orgs)
+	}
+	if len(orgs) != 1 {
+		t.Fatal("org must be unique: ", orgs)
+	}
+	theOrg := orgs[0].(*Element)
+	uids := theOrg.Properties["uid"]
+	if len(uids) != 1 {
+		t.Fatal("Expected one uid, Actual %s\n", len(uids))
+	}
+	uid := uids[0]
+	if uid != "http://www.example.com/MyAcme" {
+		t.Fatal("Expected http://www.example.com/MyAcme, Actual %s\n", uid)
+	}
+	names = theOrg.Properties["name"]
+	if len(names) != 1 {
+		t.Fatal("Expected one name, Actual %s\n", len(names))
+	}
+	name := names[0]
+	if name != "MyAcme" {
+		t.Fatal("Expected MyAcme, Actual %s\n", name)
+	}
+}
+
 func TestDivAHCardWithOrg(t *testing.T) {
 	s := `<div class='h-card'><a class='u-url p-name' href='http://www.example.com/Someone'>Someone</a><span class='p-org'>MyAcme</span></div>`
 	doc, err := html.Parse(strings.NewReader(s))
@@ -273,9 +348,6 @@ func TestDivAHCardWithOrg(t *testing.T) {
 		t.Fatal("Expected MyAcme, Actual %s\n", theOrgName)
 	}
 }
-
-
-
 
 func TestealUseCaseFromNybiCCWiki(t *testing.T) {
 	s := `<div style="background: none repeat scroll 0 0 #f9f9f9;border: 1px solid #aaa;clear: right;float: right;font-size: 0.9em;line-height: 1.4em;margin: 0 0 0.5em 1em;max-width: 325px;padding: 5px;width: 25em;word-wrap: break-word;" class="h-card">
@@ -356,7 +428,7 @@ func TestealUseCaseFromNybiCCWiki(t *testing.T) {
 	}
 	theOrg := orgs[0].(*Element)
 	if theOrg == nil {
-		t.Fatal("hCard expected for the organisation");
+		t.Fatal("hCard expected for the organisation")
 	}
 	fmt.Printf("%s\n", theOrg)
 	theOrgName := theOrg.Properties["name"][0]
@@ -366,5 +438,5 @@ func TestealUseCaseFromNybiCCWiki(t *testing.T) {
 	theOrgUrl := theOrg.Properties["url"][0]
 	if theOrgUrl != "http://nybi.cc" {
 		t.Fatal("Expected http://nybi.cc, Actual %s\n", theOrgUrl)
-	}	
+	}
 }
